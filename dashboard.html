@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lean Hospital Operations Dashboard - Synergy Global Hospital</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; color: #2d3748; }
+        .header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%); color: white; padding: 20px 30px; }
+        .header h1 { font-size: 1.6rem; font-weight: 600; }
+        .header p { font-size: 0.9rem; opacity: 0.85; margin-top: 5px; }
+        .filter-bar { background: white; padding: 15px 30px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .filter-bar label { font-weight: 600; font-size: 0.85rem; color: #4a5568; }
+        .filter-bar select { padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9rem; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 20px 30px; }
+        .kpi-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: #2b6cb0; }
+        .kpi-card .kpi-label { font-size: 0.8rem; color: #718096; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-card .kpi-trend { font-size: 0.75rem; margin-top: 8px; padding: 3px 8px; border-radius: 12px; display: inline-block; }
+        .kpi-card .trend-up { background: #fed7d7; color: #c53030; }
+        .kpi-card .trend-down { background: #c6f6d5; color: #276749; }
+        .kpi-card .trend-neutral { background: #e2e8f0; color: #4a5568; }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; padding: 0 30px 30px; }
+        .chart-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .chart-card h3 { font-size: 0.95rem; color: #2d3748; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        .chart-container { position: relative; height: 280px; }
+        .insights-section { padding: 0 30px 30px; }
+        .insights-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .insights-card h3 { font-size: 0.95rem; color: #2d3748; margin-bottom: 15px; }
+        .insight-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f7fafc; }
+        .insight-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+        .icon-warning { background: #fefcbf; color: #d69e2e; }
+        .icon-info { background: #bee3f8; color: #2b6cb0; }
+        .icon-success { background: #c6f6d5; color: #276749; }
+        .insight-text { font-size: 0.85rem; line-height: 1.5; }
+        .insight-text strong { color: #2d3748; }
+        .footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #a0aec0; }
+        @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Lean Hospital Operations Dashboard</h1>
+        <p>Synergy Global Hospital, Ranchi, Jharkhand | Internship Project: Gunjan Prakash (MBA-HA&HCM) | Data Period: Nov 2025 – Feb 2026</p>
+    </div>
+
+    <div class="filter-bar">
+        <label>Filter by Month:</label>
+        <select id="monthFilter" onchange="updateDashboard()">
+            <option value="all">All Months</option>
+            <option value="nov">November 2025</option>
+            <option value="dec">December 2025</option>
+            <option value="jan">January 2026</option>
+            <option value="feb">February 2026</option>
+        </select>
+        <label>View:</label>
+        <select id="viewType" onchange="updateDashboard()">
+            <option value="overview">Overview</option>
+            <option value="los">Length of Stay Focus</option>
+            <option value="consultant">Consultant Analysis</option>
+        </select>
+    </div>
+
+    <div class="kpi-row" id="kpiRow"></div>
+    <div class="charts-grid" id="chartsGrid"></div>
+    <div class="insights-section" id="insightsSection"></div>
+    <div class="footer">Dashboard developed as part of MBA Project | Implementing Lean Management Principles in Hospital Operations | 2025-2026</div>
+
+<script>
+// === DATA ===
+const monthlyData = {
+    nov: { label: 'Nov 2025', admissions: 103, validLOS: 77, avgLOS: 3.03, sameDay: 7, short: 33, medium: 22, long: 15, incomplete: 26 },
+    dec: { label: 'Dec 2025', admissions: 116, validLOS: 112, avgLOS: 3.04, sameDay: 9, short: 45, medium: 36, long: 22, incomplete: 4 },
+    jan: { label: 'Jan 2026', admissions: 84, validLOS: 76, avgLOS: 3.62, sameDay: 4, short: 30, medium: 25, long: 17, incomplete: 8 },
+    feb: { label: 'Feb 2026', admissions: 78, validLOS: 57, avgLOS: 3.72, sameDay: 4, short: 29, medium: 17, long: 7, incomplete: 21 }
+};
+
+const losDistribution = [24, 88, 49, 48, 31, 21, 14, 12, 18, 10, 7];
+const losLabels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9-10', '11-18'];
+
+const consultantData = {
+    labels: ['Dr. Rahul Sinha', 'Dr. M.S. Islam', 'Dr. Rajnish Kumar', 'Dr. Javed Akhtar', 'Emergency', 'Dr. Vivek Goswami', 'Dr. Manjar Ali', 'Dr. Jatin Sethi', 'Dr. S. Nawal', 'Others'],
+    values: [127, 30, 29, 22, 19, 17, 16, 8, 6, 43]
+};
+
+const dailyAdmissions = {
+    nov: [2,3,4,4,3,3,4,3,4,3,2,3,4,3,4,3,4,4,3,3,4,3,2,3,4,4,3,4,3,3],
+    dec: [5,6,4,3,4,5,3,4,4,3,4,3,4,3,4,4,3,4,4,3,4,3,3,4,4,3,3,4,3,4,3],
+    jan: [2,3,4,2,3,2,3,4,3,3,4,2,3,3,2,3,2,3,2,3,3,2,3,2,3,3,2,3,2,2,2],
+    feb: [3,4,3,3,3,3,3,3,3,3,2,2,3,2,3,3,3,2,2,3,2,3,3,2,2,3,2,2]
+};
+
+let charts = {};
+
+function getFilteredData() {
+    const month = document.getElementById('monthFilter').value;
+    if (month === 'all') {
+        return {
+            admissions: 381, avgLOS: 3.29, validLOS: 322, sameDay: 24,
+            short: 137, medium: 100, long: 61, incomplete: 59,
+            label: 'All Months (Nov 2025 – Feb 2026)'
+        };
+    }
+    return monthlyData[month];
+}
+
+function updateDashboard() {
+    const data = getFilteredData();
+    renderKPIs(data);
+    renderCharts(data);
+    renderInsights(data);
+}
+
+function renderKPIs(data) {
+    const total = data.admissions;
+    const avgLOS = data.avgLOS;
+    const sameDayPct = ((data.sameDay / data.validLOS) * 100).toFixed(1);
+    const longPct = ((data.long / data.validLOS) * 100).toFixed(1);
+    const incompletePct = ((data.incomplete / total) * 100).toFixed(1);
+
+    document.getElementById('kpiRow').innerHTML = `
+        <div class="kpi-card">
+            <div class="kpi-value">${total}</div>
+            <div class="kpi-label">Total Admissions</div>
+            <div class="kpi-trend trend-neutral">${(total/30*1).toFixed(1)} avg/day</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">${avgLOS.toFixed(2)}</div>
+            <div class="kpi-label">Avg Length of Stay (Days)</div>
+            <div class="kpi-trend ${avgLOS > 3.3 ? 'trend-up' : 'trend-down'}">Target: ≤ 2.8 days</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">${sameDayPct}%</div>
+            <div class="kpi-label">Same-Day Discharge Rate</div>
+            <div class="kpi-trend trend-neutral">${data.sameDay} patients</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">${longPct}%</div>
+            <div class="kpi-label">Extended Stay (6+ Days)</div>
+            <div class="kpi-trend trend-up">${data.long} patients</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value">${incompletePct}%</div>
+            <div class="kpi-label">Incomplete Records</div>
+            <div class="kpi-trend ${incompletePct > 10 ? 'trend-up' : 'trend-down'}">Target: < 2%</div>
+        </div>
+    `;
+}
+
+function destroyCharts() {
+    Object.values(charts).forEach(c => c.destroy());
+    charts = {};
+}
+
+function renderCharts(data) {
+    destroyCharts();
+    const grid = document.getElementById('chartsGrid');
+    grid.innerHTML = `
+        <div class="chart-card"><h3>Monthly Admission Trends & Average LOS</h3><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+        <div class="chart-card"><h3>Length of Stay Distribution</h3><div class="chart-container"><canvas id="losChart"></canvas></div></div>
+        <div class="chart-card"><h3>Consultant Workload Distribution (Pareto)</h3><div class="chart-container"><canvas id="consultantChart"></canvas></div></div>
+        <div class="chart-card"><h3>LOS Category Breakdown</h3><div class="chart-container"><canvas id="pieChart"></canvas></div></div>
+    `;
+
+    // Trend Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    charts.trend = new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026'],
+            datasets: [{
+                label: 'Admissions',
+                data: [103, 116, 84, 78],
+                backgroundColor: 'rgba(43, 108, 176, 0.7)',
+                borderColor: '#2b6cb0',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: 'Avg LOS (Days)',
+                data: [3.03, 3.04, 3.62, 3.72],
+                type: 'line',
+                borderColor: '#e53e3e',
+                backgroundColor: 'rgba(229, 62, 62, 0.1)',
+                borderWidth: 3,
+                pointRadius: 5,
+                tension: 0.3,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { position: 'left', title: { display: true, text: 'Admissions' }, beginAtZero: true },
+                y1: { position: 'right', title: { display: true, text: 'Avg LOS (Days)' }, min: 2, max: 5, grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // LOS Distribution
+    const losCtx = document.getElementById('losChart').getContext('2d');
+    charts.los = new Chart(losCtx, {
+        type: 'bar',
+        data: {
+            labels: losLabels,
+            datasets: [{
+                label: 'Number of Patients',
+                data: losDistribution,
+                backgroundColor: losDistribution.map((_, i) => i <= 2 ? '#48bb78' : i <= 5 ? '#ecc94b' : '#e53e3e'),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { title: { display: true, text: 'Length of Stay (Days)' } }, y: { title: { display: true, text: 'Patients' }, beginAtZero: true } }
+        }
+    });
+
+    // Consultant Pareto
+    const cumPct = [];
+    const total = consultantData.values.reduce((a, b) => a + b, 0);
+    let cumSum = 0;
+    consultantData.values.forEach(v => { cumSum += v; cumPct.push((cumSum / total * 100).toFixed(1)); });
+
+    const conCtx = document.getElementById('consultantChart').getContext('2d');
+    charts.consultant = new Chart(conCtx, {
+        type: 'bar',
+        data: {
+            labels: consultantData.labels,
+            datasets: [{
+                label: 'Cases',
+                data: consultantData.values,
+                backgroundColor: 'rgba(43, 108, 176, 0.7)',
+                yAxisID: 'y'
+            }, {
+                label: 'Cumulative %',
+                data: cumPct,
+                type: 'line',
+                borderColor: '#d69e2e',
+                borderWidth: 2,
+                pointRadius: 3,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { font: { size: 9 }, maxRotation: 45 } },
+                y: { position: 'left', title: { display: true, text: 'Cases' }, beginAtZero: true },
+                y1: { position: 'right', title: { display: true, text: 'Cumulative %' }, min: 0, max: 100, grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // Pie Chart
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    charts.pie = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Same-Day (0 days)', 'Short Stay (1-2 days)', 'Medium Stay (3-5 days)', 'Extended (6+ days)'],
+            datasets: [{
+                data: [data.sameDay, data.short, data.medium, data.long],
+                backgroundColor: ['#48bb78', '#4299e1', '#ecc94b', '#e53e3e'],
+                borderWidth: 2, borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
+        }
+    });
+}
+
+function renderInsights(data) {
+    document.getElementById('insightsSection').innerHTML = `
+        <div class="insights-card">
+            <h3>Lean Improvement Insights & Action Items</h3>
+            <div class="insight-item">
+                <div class="insight-icon icon-warning">⚠</div>
+                <div class="insight-text"><strong>Increasing LOS Trend:</strong> Average LOS increased from 3.03 days (Nov) to 3.72 days (Feb) — a 23% rise over 4 months. Without intervention, this could add ~400 extra bed-days annually. <em>Action: Implement standardized discharge rounds at 10:00 AM daily.</em></div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon icon-warning">⚠</div>
+                <div class="insight-text"><strong>Consultant Bottleneck:</strong> 40.1% of all cases managed by single consultant creates single-point-of-failure vulnerability. <em>Action: Develop structured referral distribution and cross-coverage protocols.</em></div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon icon-info">ℹ</div>
+                <div class="insight-text"><strong>Process Efficiency:</strong> Value Stream Mapping shows only 21.5% of patient journey time is value-adding. 78.5% is waiting/non-value activity. <em>Action: Target discharge waiting time (180 min avg) as priority Kaizen event.</em></div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon icon-success">✓</div>
+                <div class="insight-text"><strong>Benchmark Performance:</strong> Current avg LOS (3.29 days) is 22% below Indian private hospital average (4.2 days). Achieving Lean benchmark (2.8 days) requires 15% further reduction — feasible through discharge process optimization.</div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon icon-info">ℹ</div>
+                <div class="insight-text"><strong>Documentation Gap:</strong> ${((data.incomplete/data.admissions)*100).toFixed(1)}% records lack complete discharge data — indicates need for standard work protocols at discharge desk. <em>Target: Reduce to below 2%.</em></div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-icon icon-success">✓</div>
+                <div class="insight-text"><strong>Quick Win Opportunity:</strong> 50% of patients discharge within 2 days — ideal for standardized clinical pathways with pre-defined discharge criteria for common short-stay conditions.</div>
+            </div>
+        </div>
+    `;
+}
+
+// Initialize
+updateDashboard();
+</script>
+</body>
+</html>
