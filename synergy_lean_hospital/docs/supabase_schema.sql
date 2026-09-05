@@ -217,3 +217,17 @@ CREATE POLICY "Same hospital audits_5s" ON audits_5s FOR ALL USING (hospital_cod
 CREATE POLICY "Same hospital kaizen_ideas" ON kaizen_ideas FOR ALL USING (hospital_code = get_user_hospital_code());
 CREATE POLICY "Same hospital patient_feedback" ON patient_feedback FOR ALL USING (hospital_code = get_user_hospital_code());
 CREATE POLICY "Same hospital notifications" ON notifications FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Auto-update updated_at trigger
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_hospital_profiles_updated_at BEFORE UPDATE ON hospital_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_admissions_updated_at BEFORE UPDATE ON admissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_kaizen_ideas_updated_at BEFORE UPDATE ON kaizen_ideas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

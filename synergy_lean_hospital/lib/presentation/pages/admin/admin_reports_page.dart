@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -117,14 +118,16 @@ class AdminReportsPage extends StatelessWidget {
           .from('admissions')
           .select('consultant_id, consultants(name), count')
           .eq('hospital_code', hospitalCode)
-          .filter('status', 'neq', 'discharged')
+          .neq('status', 'discharged')
           .groupingSet(['consultant_id', 'consultants(name)']);
 
+      final total = result.fold<int>(0, (sum, item) => sum + (item['count'] as int));
+      
       final pdf = await _buildPdfReport(
         title: 'Consultant Workload Report',
         headers: ['Consultant', 'Active Cases', 'Percentage'],
         rows: result.map((item) {
-          final total = result.fold<int>(0, (sum, i) => sum + (i['count'] as int));
+          final count = item['count'] as int;
           final pct = total > 0 ? ((item['count'] as int) / total * 100).toStringAsFixed(1) : '0.0';
           return [
             item['consultants']?['name'] ?? 'Unknown',

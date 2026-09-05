@@ -103,7 +103,7 @@ class StaffConsultantLoadPage extends StatelessWidget {
         .from('admissions')
         .select('consultant_id, consultants(name), count')
         .eq('hospital_code', hospitalCode)
-        .filter('status', 'neq', 'discharged')
+        .neq('status', 'discharged')
         .groupingSet(['consultant_id', 'consultants(name)']);
 
     final total = result.fold<int>(0, (sum, item) => sum + (item['count'] as int));

@@ -12,9 +12,15 @@ class DashboardLoading extends DashboardState {}
 
 class DashboardLoaded extends DashboardState {
   final Map<String, dynamic> metrics;
-  const DashboardLoaded({required this.metrics});
+  final List<Map<String, dynamic>>? consultantWorkload;
+  final List<Map<String, dynamic>>? monthlyTrends;
+  const DashboardLoaded({
+    required this.metrics,
+    this.consultantWorkload,
+    this.monthlyTrends,
+  });
   @override
-  List<Object?> get props => [metrics];
+  List<Object?> get props => [metrics, consultantWorkload, monthlyTrends];
 }
 
 class DashboardError extends DashboardState {

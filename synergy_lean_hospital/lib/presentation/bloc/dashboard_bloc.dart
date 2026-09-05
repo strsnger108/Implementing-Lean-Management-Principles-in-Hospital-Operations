@@ -29,21 +29,45 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
   }
 
-  Future<void> _onLoadConsultantWorkload(LoadConsultantWorkload event, Emitter<DashboardState> emit) async {
+  Future<void> _onLoadMetrics(LoadMetrics event, Emitter<DashboardState> emit) async {
+    emit(const DashboardLoading());
     try {
-      final workload = await _metricsRepo.getConsultantWorkload(event.hospitalCode);
-      // Store in state for UI to access
+      final metrics = await _metricsRepo.getMonthlyMetrics(event.hospitalCode, event.month);
+      emit(DashboardLoaded(metrics: metrics));
     } catch (e) {
       emit(DashboardError(message: e.toString()));
     }
   }
 
-  Future<void> _onLoadMonthlyTrends(LoadMonthlyTrends event, Emitter<DashboardState> emit) async {
+  Future<List<Map<String, dynamic>>> loadConsultantWorkload(String hospitalCode) async {
     try {
-      final trends = await _metricsRepo.getMonthlyTrends(event.hospitalCode);
-      // Store in state for UI to access
+      final workload = await _metricsRepo.getConsultantWorkload(hospitalCode);
+      final current = state;
+      if (current is DashboardLoaded) {
+        emit(DashboardLoaded(metrics: current.metrics, consultantWorkload: workload));
+      } else {
+        emit(DashboardLoaded(metrics: {}, consultantWorkload: workload));
+      }
+      return workload;
     } catch (e) {
       emit(DashboardError(message: e.toString()));
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> loadMonthlyTrends(String hospitalCode) async {
+    try {
+      final trends = await _metricsRepo.getMonthlyTrends(hospitalCode);
+      final current = state;
+      if (current is DashboardLoaded) {
+        emit(DashboardLoaded(metrics: current.metrics, monthlyTrends: trends));
+      } else {
+        emit(DashboardLoaded(metrics: {}, monthlyTrends: trends));
+      }
+      return trends;
+    } catch (e) {
+      emit(DashboardError(message: e.toString()));
+      return [];
     }
   }
 

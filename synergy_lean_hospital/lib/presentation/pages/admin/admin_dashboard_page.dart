@@ -4,8 +4,37 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../bloc/dashboard_bloc.dart';
 
-class AdminDashboardPage extends StatelessWidget {
+class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
+
+  @override
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
+}
+
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    final user = SupabaseService.client.auth.currentUser;
+    if (user == null) return;
+    
+    final profile = await SupabaseService.client
+        .from('profiles')
+        .select('hospital_code')
+        .eq('id', user.id)
+        .single();
+    final hospitalCode = profile['hospital_code'] as String;
+
+    if (mounted) {
+      context.read<DashboardBloc>().add(LoadMetrics(hospitalCode: hospitalCode, month: 'all'));
+      context.read<DashboardBloc>().loadConsultantWorkload(hospitalCode);
+      context.read<DashboardBloc>().loadMonthlyTrends(hospitalCode);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,20 +47,34 @@ class AdminDashboardPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: () {
-              context.read<DashboardBloc>().add(const ExportReport());
+              final user = SupabaseService.client.auth.currentUser;
+              if (user != null) {
+                context.read<DashboardBloc>().add(const ExportReport());
+              }
             },
           ),
         ],
       ),
       body: BlocBuilder<DashboardBloc, DashboardState>(
-        buildWhen: (prev, curr) => prev.metrics != curr.metrics,
+        buildWhen: (prev, curr) {
+          if (prev is DashboardLoaded && curr is DashboardLoaded) {
+            return prev.metrics != curr.metrics ||
+                prev.consultantWorkload != curr.consultantWorkload ||
+                prev.monthlyTrends != curr.monthlyTrends;
+          }
+          return prev.runtimeType != curr.runtimeType;
+        },
         builder: (context, state) {
-          if (state.isLoading) {
+          if (state is DashboardLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           
+          if (state is! DashboardLoaded) {
+            return const Center(child: Text('No data available'));
+          }
+          
           final metrics = state.metrics;
-          if (metrics == null) {
+          if (metrics.isEmpty) {
             return const Center(child: Text('No data available'));
           }
           
@@ -130,87 +173,87 @@ class AdminDashboardPage extends StatelessWidget {
                 const SizedBox(height: 24),
                 _buildChartCard(
                   title: 'Consultant Workload',
-                  child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: context.read<DashboardBloc>().loadConsultantWorkload(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      final data = snapshot.data!;
-                      return BarChart(
-                        BarChartData(
-                          barGroups: data.asMap().entries.map((entry) {
-                            return BarChartGroupData(
-                              x: entry.key,
-                              barRods: [
-                                BarChartRodData(
-                                  toY: entry.value['count'].toDouble(),
-                                  color: const Color(0xFF2b6cb0),
-                                ),
-                              ],
-                            );
-                          }).toList(),
-                          titlesData: FlTitlesData(
-                            bottom: FlTitlesData(
-                              show: true,
-                              getTitles: (value) {
-                                if (value.toInt() < data.length) {
-                                  final name = data[value.toInt()]['consultant_name'] as String;
-                                  final parts = name.split(' ');
-                                  return parts.length > 1 ? parts.last : parts.first;
-                                }
-                                return '';
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  child: _buildConsultantChart(context, state),
                 ),
                 const SizedBox(height: 24),
                 _buildChartCard(
                   title: 'Monthly Admission Trends',
-                  child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: context.read<DashboardBloc>().loadMonthlyTrends(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      final trends = snapshot.data!;
-                      return LineChart(
-                        LineChartData(
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: trends.asMap().entries.map((entry) {
-                                return FlSpot(entry.key.toDouble(), entry.value['count'].toDouble());
-                              }).toList(),
-                              isCurved: true,
-                              color: const Color(0xFF2b6cb0),
-                              barWidth: 3,
-                            ),
-                          ],
-                          titlesData: FlTitlesData(
-                            bottom: FlTitlesData(
-                              show: true,
-                              getTitles: (value) {
-                                if (value.toInt() < trends.length) {
-                                  final date = DateTime.parse(trends[value.toInt()]['date']);
-                                  return '${date.month}/${date.day}';
-                                }
-                                return '';
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  child: _buildTrendsChart(context, state),
                 ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildConsultantChart(BuildContext context, DashboardLoaded state) {
+    final data = state.consultantWorkload ?? [];
+    if (data.isEmpty) {
+      return const Center(child: Text('Loading...'));
+    }
+
+    return BarChart(
+      BarChartData(
+        barGroups: data.asMap().entries.map((entry) {
+          return BarChartGroupData(
+            x: entry.key,
+            barRods: [
+              BarChartRodData(
+                toY: entry.value['count'].toDouble(),
+                color: const Color(0xFF2b6cb0),
+              ),
+            ],
+          );
+        }).toList(),
+        titlesData: FlTitlesData(
+          bottom: FlTitlesData(
+            show: true,
+            getTitles: (value) {
+              if (value.toInt() < data.length) {
+                final name = data[value.toInt()]['consultant_name'] as String;
+                final parts = name.split(' ');
+                return parts.length > 1 ? parts.last : parts.first;
+              }
+              return '';
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrendsChart(BuildContext context, DashboardLoaded state) {
+    final trends = state.monthlyTrends ?? [];
+    if (trends.isEmpty) {
+      return const Center(child: Text('Loading...'));
+    }
+
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: trends.asMap().entries.map((entry) {
+              return FlSpot(entry.key.toDouble(), entry.value['count'].toDouble());
+            }).toList(),
+            isCurved: true,
+            color: const Color(0xFF2b6cb0),
+            barWidth: 3,
+          ),
+        ],
+        titlesData: FlTitlesData(
+          bottom: FlTitlesData(
+            show: true,
+            getTitles: (value) {
+              if (value.toInt() < trends.length) {
+                final date = DateTime.parse(trends[value.toInt()]['date']);
+                return '${date.month}/${date.day}';
+              }
+              return '';
+            },
+          ),
+        ),
       ),
     );
   }

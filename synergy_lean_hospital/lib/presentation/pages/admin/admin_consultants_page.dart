@@ -93,9 +93,11 @@ class _AdminConsultantsPageState extends State<AdminConsultantsPage> {
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Color(int.parse(consultant['color_tag']?.replaceFirst('#', '0xFF') ?? '0xFF2b6cb0')),
+                      backgroundColor: Color(int.parse(
+                        (consultant['color_tag'] ?? '#2b6cb0').replaceFirst('#', '0xFF'),
+                      )),
                       child: Text(
-                        consultant['name']?.toString().split(' ').map((n) => n[0]).take(2).join().toUpperCase() ?? '?',
+                        (consultant['name'] ?? '?').toString().split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join().toUpperCase(),
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),

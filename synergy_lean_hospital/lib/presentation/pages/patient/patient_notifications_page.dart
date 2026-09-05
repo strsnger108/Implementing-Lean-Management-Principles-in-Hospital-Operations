@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class PatientNotificationsPage extends StatelessWidget {
+class PatientNotificationsPage extends StatefulWidget {
   const PatientNotificationsPage({super.key});
+
+  @override
+  State<PatientNotificationsPage> createState() => _PatientNotificationsPageState();
+}
+
+class _PatientNotificationsPageState extends State<PatientNotificationsPage> {
+  int _refreshKey = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +20,7 @@ class PatientNotificationsPage extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
+        key: ValueKey(_refreshKey),
         future: _getNotifications(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -63,9 +71,9 @@ class PatientNotificationsPage extends StatelessWidget {
                         .from('notifications')
                         .update({'is_read': true})
                         .eq('id', notification['id']);
-                    if (context.mounted) {
-                      (context as Element).markNeedsBuild();
-                    }
+                    setState(() {
+                      _refreshKey++;
+                    });
                   },
                 ),
               );

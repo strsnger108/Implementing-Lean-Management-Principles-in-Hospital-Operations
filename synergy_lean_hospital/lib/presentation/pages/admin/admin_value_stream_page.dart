@@ -78,7 +78,7 @@ class _AdminValueStreamPageState extends State<AdminValueStreamPage> {
                           child: Text('${index + 1}'),
                         ),
                         title: Text(stage['name'] ?? 'Untitled Stage'),
-                        subtitle: Text('Target: ${stage['target_minutes']} min'),
+                        subtitle: Text('Target: ${stage['target_minutes'] ?? 30} min'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -131,7 +131,7 @@ class _AdminValueStreamPageState extends State<AdminValueStreamPage> {
 
   void _showEditStageDialog(Map<String, dynamic> stage) {
     _nameController.text = stage['name'] ?? '';
-    _targetController.text = stage['target_minutes'].toString();
+    _targetController.text = (stage['target_minutes'] ?? 30).toString();
 
     showDialog(
       context: context,

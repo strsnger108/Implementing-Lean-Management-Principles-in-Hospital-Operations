@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:synergy_lean_hospital/data/datasources/supabase_datasource.dart';
-import 'package:synergy_lean_hospital/services/supabase_service.dart';
 
 class AdmissionRepository {
   final SupabaseDataSource _dataSource = SupabaseDataSource();
