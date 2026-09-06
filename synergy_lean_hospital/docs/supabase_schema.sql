@@ -1,10 +1,20 @@
--- Synergy Lean Hospital - Supabase Schema
--- Run this in Supabase SQL Editor to set up the database
+-- ============================================================
+-- Synergy Lean Hospital — Supabase Schema
+-- Prerequisites:
+--   1. Enable Authentication in Supabase Dashboard
+--      (Settings → Auth → Enable Email and/or Phone provider)
+--   2. Create storage buckets: hospital-logos (public), audit-photos (private)
+--   3. Run this entire script in Supabase SQL Editor
+-- ============================================================
 
--- Enable UUID extension
+-- ------------------------------------------------------------
+-- Extensions
+-- ------------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Hospital Profiles (Tenant Root)
+-- ------------------------------------------------------------
+-- 1. Hospital Profiles (Tenant Root)
+-- ------------------------------------------------------------
 CREATE TABLE hospital_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT UNIQUE NOT NULL,
@@ -19,7 +29,10 @@ CREATE TABLE hospital_profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- User Profiles (Patients, Staff, Admins)
+-- ------------------------------------------------------------
+-- 2. User Profiles (Patients, Staff, Admins)
+--    Must be created AFTER auth.users exists (enable Auth first)
+-- ------------------------------------------------------------
 CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -36,7 +49,9 @@ CREATE TABLE profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Departments (Configurable per hospital)
+-- ------------------------------------------------------------
+-- 3. Departments
+-- ------------------------------------------------------------
 CREATE TABLE departments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -46,7 +61,9 @@ CREATE TABLE departments (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Consultants
+-- ------------------------------------------------------------
+-- 4. Consultants
+-- ------------------------------------------------------------
 CREATE TABLE consultants (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -59,7 +76,9 @@ CREATE TABLE consultants (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Admissions
+-- ------------------------------------------------------------
+-- 5. Admissions
+-- ------------------------------------------------------------
 CREATE TABLE admissions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -77,7 +96,9 @@ CREATE TABLE admissions (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- LOS Records
+-- ------------------------------------------------------------
+-- 6. LOS Records
+-- ------------------------------------------------------------
 CREATE TABLE los_records (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -87,7 +108,9 @@ CREATE TABLE los_records (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Daily Admissions (Aggregated)
+-- ------------------------------------------------------------
+-- 7. Daily Admissions (Aggregated)
+-- ------------------------------------------------------------
 CREATE TABLE daily_admissions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -97,7 +120,9 @@ CREATE TABLE daily_admissions (
   UNIQUE(hospital_code, date)
 );
 
--- Value Stream Stages (Configurable per hospital)
+-- ------------------------------------------------------------
+-- 8. Value Stream Stages
+-- ------------------------------------------------------------
 CREATE TABLE value_stream_stages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -108,7 +133,9 @@ CREATE TABLE value_stream_stages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Patient Stage Progress
+-- ------------------------------------------------------------
+-- 9. Patient Stage Progress
+-- ------------------------------------------------------------
 CREATE TABLE patient_stage_progress (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -119,7 +146,9 @@ CREATE TABLE patient_stage_progress (
   is_completed BOOLEAN DEFAULT FALSE
 );
 
--- 5S Audits
+-- ------------------------------------------------------------
+-- 10. 5S Audits
+-- ------------------------------------------------------------
 CREATE TABLE audits_5s (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -131,7 +160,9 @@ CREATE TABLE audits_5s (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Kaizen Ideas
+-- ------------------------------------------------------------
+-- 11. Kaizen Ideas
+-- ------------------------------------------------------------
 CREATE TABLE kaizen_ideas (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -146,7 +177,9 @@ CREATE TABLE kaizen_ideas (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Patient Feedback
+-- ------------------------------------------------------------
+-- 12. Patient Feedback
+-- ------------------------------------------------------------
 CREATE TABLE patient_feedback (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -158,7 +191,9 @@ CREATE TABLE patient_feedback (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Notifications
+-- ------------------------------------------------------------
+-- 13. Notifications
+-- ------------------------------------------------------------
 CREATE TABLE notifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_code TEXT NOT NULL REFERENCES hospital_profiles(hospital_code),
@@ -170,7 +205,9 @@ CREATE TABLE notifications (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable RLS on all tables
+-- ------------------------------------------------------------
+-- Enable Row Level Security (RLS)
+-- ------------------------------------------------------------
 ALTER TABLE hospital_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
@@ -185,7 +222,9 @@ ALTER TABLE kaizen_ideas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE patient_feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
--- Helper function to get hospital_code from JWT
+-- ------------------------------------------------------------
+-- Helper: get hospital_code from current user context
+-- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION get_user_hospital_code()
 RETURNS TEXT AS $$
 BEGIN
@@ -196,29 +235,55 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
+-- ------------------------------------------------------------
 -- RLS Policies
+-- ------------------------------------------------------------
+-- Hospital Profiles: public read, admin write
 CREATE POLICY "Public read hospital profiles" ON hospital_profiles FOR SELECT USING (true);
 CREATE POLICY "Admin insert hospital profiles" ON hospital_profiles FOR INSERT WITH CHECK (true);
 CREATE POLICY "Admin update hospital profiles" ON hospital_profiles FOR UPDATE USING (true);
 
+-- Profiles: users see same hospital, update own
 CREATE POLICY "Users see same hospital profiles" ON profiles FOR SELECT USING (hospital_code = get_user_hospital_code());
 CREATE POLICY "Users update own profile" ON profiles FOR UPDATE USING (id = auth.uid());
 CREATE POLICY "Admin insert profiles" ON profiles FOR INSERT WITH CHECK (hospital_code = get_user_hospital_code());
 
+-- Admissions: same hospital only
 CREATE POLICY "Same hospital admissions" ON admissions FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Consultants: same hospital only
 CREATE POLICY "Same hospital consultants" ON consultants FOR ALL USING (hospital_code = get_user_hospital_code());
 
+-- Departments: same hospital only
 CREATE POLICY "Same hospital departments" ON departments FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- LOS Records: same hospital only
 CREATE POLICY "Same hospital los_records" ON los_records FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Daily Admissions: same hospital only
 CREATE POLICY "Same hospital daily_admissions" ON daily_admissions FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Value Stream Stages: same hospital only
 CREATE POLICY "Same hospital value_stream_stages" ON value_stream_stages FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Patient Stage Progress: same hospital only
 CREATE POLICY "Same hospital patient_stage_progress" ON patient_stage_progress FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- 5S Audits: same hospital only
 CREATE POLICY "Same hospital audits_5s" ON audits_5s FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Kaizen Ideas: same hospital only
 CREATE POLICY "Same hospital kaizen_ideas" ON kaizen_ideas FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Patient Feedback: same hospital only
 CREATE POLICY "Same hospital patient_feedback" ON patient_feedback FOR ALL USING (hospital_code = get_user_hospital_code());
+
+-- Notifications: same hospital only
 CREATE POLICY "Same hospital notifications" ON notifications FOR ALL USING (hospital_code = get_user_hospital_code());
 
--- Auto-update updated_at trigger
+-- ------------------------------------------------------------
+-- Auto-update updated_at triggers
+-- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN

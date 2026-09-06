@@ -117,3 +117,38 @@ Hospitals configure the app via the Admin Panel:
 | Offline sync conflicts | Last-write-wins + manual reconciliation UI for admins |
 | Hospital config drift | Version config snapshots; support rollback |
 | Low staff adoption | Mirror existing dashboard UX; train on Lean waste reduction benefits |
+
+## 13. Investor Pitch Deliverable
+**Status:** Completed
+- Created `synergy_lean_hospital/investor_pitch.html`
+- Standalone browser-ready HTML using Chart.js CDN
+- Sections: Problem (35% waste, consultant bottleneck, discharge delays), Solution (Patient/Staff/Admin roles), Market Opportunity (62% private share, ₹50L Cr market, tier-2 gap), Projected Impact (LOS trajectory + admissions charts), ROI Calculator (editable inputs for LOS, admissions, bed cost), Business Model (SaaS + implementation fee + premium modules), Why Now (NHP 2017, Ayushman Bharat, post-COVID shift), Team & Traction, Contact
+- No backend required; opens directly in any browser for investor presentations
+
+## 14. Launch & Pitch Execution Guide
+**Goal:** Show the app and dashboard to investors even if you cannot run the full Flutter build locally.
+
+### Step 1: Open the Investor Pitch Dashboard (Immediate)
+- File path in this workspace: `/workspace/ba446243-7dd0-4603-8145-96022ac9a5e9/sessions/agent_aafa8d1b-721f-4809-a06e-13f63bf7b1ad/synergy_lean_hospital/investor_pitch.html`
+- If your environment supports file browsing, navigate to that path and open it in Chrome/Edge/Firefox.
+- If you have terminal access: `open synergy_lean_hospital/investor_pitch.html` (macOS) or `xdg-open synergy_lean_hospital/investor_pitch.html` (Linux).
+- If none of the above work, copy the full HTML from the file and paste it into a new file named `investor_pitch.html` on your local machine, then double-click it.
+- The ROI calculator at the bottom is interactive — edit the numbers live during the pitch.
+
+### Step 2: Run the Flutter App Demo (If Flutter is installed)
+```bash
+cd /workspace/ba446243-7dd0-4603-8145-96022ac9a5e9/sessions/agent_aafa8d1b-721f-4809-a06e-13f63bf7b1ad/synergy_lean_hospital
+flutter pub get
+flutter run
+```
+- If you do not have Flutter installed, use the HTML pitch deck alone for the investor meeting.
+- For a quick demo without building: show the investor the `investor_pitch.html` on a laptop, then verbally walk through the Flutter app screens described in the pitch deck.
+
+### Step 3: Prepare Before the Pitch
+1. Replace placeholder Supabase credentials in `lib/constants/app_constants.dart` if you want a live demo.
+2. Replace placeholder contact info in `investor_pitch.html` with real email/phone.
+3. Practice the 5-minute flow: Problem → Solution → Market → Impact → ROI → Business Model → Team.
+4. If you cannot open the HTML file, take screenshots of the pitch deck on a machine that can open it, and present those.
+
+### Step 4: If You Only Have This Chat Interface
+- Tell me: “I need the investor_pitch.html content saved locally.” I will output the full file again so you can copy-paste it into a local `.html` file and open it immediately.
