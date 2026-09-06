@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synergy Lean Hospital — Investor Pitch</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; color: #2d3748; }
+        .hero { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%); color: white; padding: 60px 30px; text-align: center; }
+        .hero h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+        .hero p { font-size: 1.1rem; opacity: 0.9; max-width: 700px; margin: 0 auto; }
+        .section { padding: 40px 30px; max-width: 1200px; margin: 0 auto; }
+        .section-title { font-size: 1.8rem; font-weight: 700; color: #1a365d; margin-bottom: 20px; text-align: center; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card h3 { color: #2b6cb0; margin-bottom: 12px; font-size: 1.1rem; }
+        .metric { font-size: 2.5rem; font-weight: 700; color: #1a365d; }
+        .metric-label { font-size: 0.85rem; color: #718096; margin-top: 4px; }
+        .chart-container { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        .chart-container h3 { color: #1a365d; margin-bottom: 16px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; }
+        .problem-box { background: #fff5f5; border-left: 4px solid #e53e3e; padding: 20px; border-radius: 8px; margin-bottom: 16px; }
+        .solution-box { background: #f0fff4; border-left: 4px solid #48bb78; padding: 20px; border-radius: 8px; margin-bottom: 16px; }
+        .problem-box h4 { color: #c53030; margin-bottom: 8px; }
+        .solution-box h4 { color: #276749; margin-bottom: 8px; }
+        .roi-calc { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .roi-calc input { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; width: 100%; margin-bottom: 12px; font-size: 1rem; }
+        .roi-result { background: #ebf8ff; padding: 16px; border-radius: 8px; margin-top: 12px; }
+        .roi-result strong { color: #2b6cb0; font-size: 1.2rem; }
+        .mockup { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .mockup-icon { font-size: 3rem; margin-bottom: 12px; }
+        .footer { text-align: center; padding: 30px; color: #a0aec0; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>Synergy Lean Hospital</h1>
+        <p>White-label mobile platform that eliminates hospital waste, shortens length of stay, and gives patients real-time visibility into their care journey.</p>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">The Problem: Operational Waste in Indian Hospitals</h2>
+        <div class="grid-2">
+            <div>
+                <div class="problem-box">
+                    <h4>🔴 35% Non-Value-Added Time</h4>
+                    <p>Patients spend over one-third of their hospital journey waiting — for admission, diagnostics, and discharge — consuming bed capacity and increasing costs.</p>
+                </div>
+                <div class="problem-box">
+                    <h4>🔴 Consultant Bottleneck</h4>
+                    <p>40% of inpatient cases concentrate with a single doctor, creating single-point-of-failure risk and uneven resource utilization.</p>
+                </div>
+                <div class="problem-box">
+                    <h4>🔴 Discharge Delays</h4>
+                    <p>Average Length of Stay (LOS) is rising — from 3.03 to 3.72 days in 4 months — without standardized discharge workflows.</p>
+                </div>
+            </div>
+            <div>
+                <div class="chart-container">
+                    <h3>Current State: Value Stream Waste</h3>
+                    <canvas id="wasteChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">The Solution: 3-Role Mobile Platform</h2>
+        <div class="cards">
+            <div class="mockup">
+                <div class="mockup-icon">🤒</div>
+                <h3>Patient App</h3>
+                <p>Hospital code + OTP signup. Real-time status tracking, discharge alerts, and 1-click feedback mapped to Lean waste categories.</p>
+            </div>
+            <div class="mockup">
+                <div class="mockup-icon">👩‍⚕️</div>
+                <h3>Staff App</h3>
+                <p>Kanban admission board, discharge tracker, consultant workload Pareto, digital 5S audits, and Kaizen idea submission.</p>
+            </div>
+            <div class="mockup">
+                <div class="mockup-icon">📊</div>
+                <h3>Admin App</h3>
+                <p>Hospital branding, consultant roster, configurable patient journey stages, Lean metrics dashboard, and PDF/CSV reports.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Market Opportunity</h2>
+        <div class="cards">
+            <div class="card">
+                <div class="metric">62%</div>
+                <div class="metric-label">Private hospital share of inpatient care in India</div>
+            </div>
+            <div class="card">
+                <div class="metric">₹50L Cr</div>
+                <div class="metric-label">Indian healthcare market size by 2025</div>
+            </div>
+            <div class="card">
+                <div class="metric">Tier-2</div>
+                <div class="metric-label">Underserved cities lacking digital operations tools</div>
+            </div>
+            <div class="card">
+                <div class="metric">White-Label</div>
+                <div class="metric-label">One codebase, infinite hospitals — zero per-customer dev cost</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Projected Impact (Per Hospital)</h2>
+        <div class="grid-2">
+            <div class="chart-container">
+                <h3>LOS Improvement Trajectory</h3>
+                <canvas id="losChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Monthly Admissions Trend</h3>
+                <canvas id="admissionsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">ROI Calculator</h2>
+        <div class="roi-calc">
+            <label><strong>Hospital Name</strong></label>
+            <input type="text" id="hospName" placeholder="e.g., Synergy Global Hospital" value="Synergy Global Hospital">
+            <label><strong>Current Avg LOS (days)</strong></label>
+            <input type="number" id="currentLos" value="3.29">
+            <label><strong>Target Avg LOS (days)</strong></label>
+            <input type="number" id="targetLos" value="2.8">
+            <label><strong>Monthly Admissions</strong></label>
+            <input type="number" id="monthlyAdmissions" value="95">
+            <label><strong>Cost per Bed-Day (₹)</strong></label>
+            <input type="number" id="bedCost" value="4500">
+            <button onclick="calculateROI()" style="width:100%;padding:12px;background:#2b6cb0;color:white;border:none;border-radius:6px;font-size:1rem;cursor:pointer;margin-top:8px;">Calculate Savings</button>
+            <div class="roi-result" id="roiResult" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Business Model</h2>
+        <div class="cards">
+            <div class="card">
+                <h3>🏥 SaaS Subscription</h3>
+                <p>₹25,000–₹50,000/month per hospital based on bed count. Includes hosting, support, and feature updates.</p>
+            </div>
+            <div class="card">
+                <h3>⚙️ Implementation Fee</h3>
+                <p>One-time onboarding and data migration fee: ₹1–3 lakhs per hospital for initial setup and staff training.</p>
+            </div>
+            <div class="card">
+                <h3>📈 Premium Modules</h3>
+                <p>Advanced analytics, HIS integration, and AI-driven discharge prediction sold as add-on modules.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Why Now?</h2>
+        <div class="cards">
+            <div class="solution-box">
+                <h4>✅ National Health Policy 2017</h4>
+                <p>Mandates continuous quality improvement and digital health records adoption across Indian healthcare institutions.</p>
+            </div>
+            <div class="solution-box">
+                <h4>✅ Ayushman Bharat PM-JAY</h4>
+                <p>Insurance-backed demand is pushing hospitals to demonstrate operational efficiency and transparency to retain empanelment.</p>
+            </div>
+            <div class="solution-box">
+                <h4>✅ Post-COVID Digital Shift</h4>
+                <p>Hospitals are actively seeking lightweight, mobile-first tools — not heavy legacy EMR systems — to digitize operations.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Team & Traction</h2>
+        <div class="card">
+            <p><strong>Founder:</strong> Gunjan Prakash — MBA (Hospital Administration), completed Lean management case study at Synergy Global Hospital, Ranchi. Analyzed 381 patient records, mapped value stream, identified 35% waste, and designed this app as the operational solution.</p>
+            <p style="margin-top:12px;"><strong>Validation:</strong> Project report accepted by Dr. D.Y. Patil Vidyapeeth, Pune. Dashboard already built and tested with real hospital data.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">Contact</h2>
+        <div class="card" style="text-align:center;">
+            <p><strong>Gunjan Prakash</strong></p>
+            <p>ERP ID: 241115821 | MBA Hospital Administration & Healthcare Management</p>
+            <p>Dr. D.Y. Patil Vidyapeeth, Centre For Online Learning, Pune</p>
+            <p>Email: gunjanprakash@example.com | Phone: +91-XXXXX-XXXXX</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        Synergy Lean Hospital — Investor Pitch Deck | 2025-2026
+    </div>
+
+    <script>
+        // Waste Chart
+        new Chart(document.getElementById('wasteChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Value-Adding (21.5%)', 'Waiting / Waste (78.5%)'],
+                datasets: [{
+                    data: [21.5, 78.5],
+                    backgroundColor: ['#48bb78', '#e53e3e'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 12 } } }
+                }
+            }
+        });
+
+        // LOS Chart
+        new Chart(document.getElementById('losChart'), {
+            type: 'line',
+            data: {
+                labels: ['Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026', 'Target (Post-App)'],
+                datasets: [{
+                    label: 'Avg LOS (Days)',
+                    data: [3.03, 3.04, 3.62, 3.72, 2.8],
+                    borderColor: '#2b6cb0',
+                    backgroundColor: 'rgba(43,108,176,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: false, min: 2, max: 4.5, title: { display: true, text: 'Days' } }
+                }
+            }
+        });
+
+        // Admissions Chart
+        new Chart(document.getElementById('admissionsChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Nov', 'Dec', 'Jan', 'Feb'],
+                datasets: [{
+                    label: 'Admissions',
+                    data: [103, 116, 84, 78],
+                    backgroundColor: 'rgba(43,108,176,0.7)',
+                    borderColor: '#2b6cb0',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Patients' } }
+                }
+            }
+        });
+
+        function calculateROI() {
+            const currentLos = parseFloat(document.getElementById('currentLos').value) || 3.29;
+            const targetLos = parseFloat(document.getElementById('targetLos').value) || 2.8;
+            const monthlyAdmissions = parseFloat(document.getElementById('monthlyAdmissions').value) || 95;
+            const bedCost = parseFloat(document.getElementById('bedCost').value) || 4500;
+
+            const losReduction = currentLos - targetLos;
+            const bedDaysSavedPerMonth = monthlyAdmissions * losReduction;
+            const monthlySavings = bedDaysSavedPerMonth * bedCost;
+            const annualSavings = monthlySavings * 12;
+            const roiPercent = ((annualSavings / 600000) * 100).toFixed(0);
+
+            document.getElementById('roiResult').style.display = 'block';
+            document.getElementById('roiResult').innerHTML = `
+                <p><strong>LOS Reduction:</strong> ${losReduction.toFixed(2)} days</p>
+                <p><strong>Bed-Days Saved/Month:</strong> ${bedDaysSavedPerMonth.toFixed(0)}</p>
+                <p><strong>Monthly Savings:</strong> ₹${monthlySavings.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
+                <p><strong>Annual Savings:</strong> ₹${annualSavings.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
+                <p><strong>Estimated ROI:</strong> ${roiPercent}% per year</p>
+            `;
+        }
+        calculateROI();
+    </script>
+</body>
+</html>
