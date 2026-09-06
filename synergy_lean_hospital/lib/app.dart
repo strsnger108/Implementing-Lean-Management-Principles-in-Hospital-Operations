@@ -23,9 +23,17 @@ import 'pages/admin/admin_hospital_config_page.dart';
 import 'pages/admin/admin_consultants_page.dart';
 import 'pages/admin/admin_reports_page.dart';
 import 'pages/admin/admin_value_stream_page.dart';
+import 'pages/common/ai_assistant_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
+
+  static void openAssistant(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AiAssistantPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +59,7 @@ class App extends StatelessWidget {
         '/admin_consultants': (context) => const AdminConsultantsPage(),
         '/admin_reports': (context) => const AdminReportsPage(),
         '/admin_value_stream': (context) => const AdminValueStreamPage(),
+        '/ai_assistant': (context) => const AiAssistantPage(),
       },
     );
   }

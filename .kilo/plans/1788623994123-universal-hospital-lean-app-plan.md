@@ -152,3 +152,48 @@ flutter run
 
 ### Step 4: If You Only Have This Chat Interface
 - Tell me: “I need the investor_pitch.html content saved locally.” I will output the full file again so you can copy-paste it into a local `.html` file and open it immediately.
+
+## 15. Supabase Setup Troubleshooting & Safe Migration Path
+**Problem:** The SQL schema failed with “Failed to get project's logs” or similar Supabase infrastructure errors.
+
+### Root Causes
+- Supabase SQL Editor cache/lock after a failed migration
+- Auth not enabled before running schema that references `auth.users`
+- `uuid-ossp` extension not enabled
+- Running the full schema in one batch triggers a Postgres timeout/migration lock
+
+### Safe Recovery Steps
+1. **Retry the SQL Editor**
+   - Refresh Supabase Dashboard
+   - Open a new SQL Editor tab
+   - Re-run the schema script from `docs/supabase_schema.sql`
+
+2. **If the error persists, run schema in smaller batches**
+   - Batch 1: extensions + `hospital_profiles` + `profiles` + `departments` + `consultants`
+   - Batch 2: `admissions` + `los_records` + `daily_admissions`
+   - Batch 3: `value_stream_stages` + `patient_stage_progress` + `audits_5s` + `kaizen_ideas` + `patient_feedback` + `notifications`
+   - Batch 4: RLS policies + triggers
+
+3. **Pre-flight checks before running SQL**
+   - Confirm Auth is enabled: Dashboard → Settings → Auth → Email/Phone providers ON
+   - Confirm `uuid-ossp` is enabled: Dashboard → Database → Extensions → search `uuid-ossp` → Enable
+   - Create storage buckets first: `hospital-logos` (public), `audit-photos` (private)
+
+4. **If SQL Editor still fails**
+   - Use Supabase CLI locally: `supabase db reset` after linking project
+   - Or use Table Editor to manually create tables via UI
+   - As a last resort, delete the project and create a fresh Supabase project, then re-run schema
+
+### Validation After Fix
+- Table Editor should show all 13 tables
+- Insert test hospital:
+  ```sql
+  INSERT INTO hospital_profiles (hospital_code, name, primary_color, secondary_color)
+  VALUES ('SGH001', 'Synergy Global Hospital', '#2b6cb0', '#1a365d');
+  ```
+- Auth → Users should allow creating a test admin
+- `profiles` table should allow inserting the admin row linked to `SGH001`
+
+### Flutter App Connection
+- Update `lib/constants/app_constants.dart` with Supabase URL + anon key
+- Run `flutter pub get && flutter run`

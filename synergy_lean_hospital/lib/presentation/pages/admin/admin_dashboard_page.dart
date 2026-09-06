@@ -185,6 +185,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AiAssistantPage()),
+          );
+        },
+        icon: const Icon(Icons.chat_bubble_outline),
+        label: const Text('Ask LeanBot'),
+        backgroundColor: const Color(0xFF2b6cb0),
+        foregroundColor: Colors.white,
+      ),
     );
   }
 

@@ -5,6 +5,7 @@ import '../bloc/auth_bloc.dart';
 import 'package:synergy_lean_hospital/presentation/pages/patient/patient_tracking_page.dart';
 import 'package:synergy_lean_hospital/presentation/pages/patient/patient_feedback_page.dart';
 import 'package:synergy_lean_hospital/presentation/pages/patient/patient_notifications_page.dart';
+import 'package:synergy_lean_hospital/presentation/pages/common/ai_assistant_page.dart';
 
 class PatientDashboardPage extends StatelessWidget {
   const PatientDashboardPage({super.key});
@@ -160,6 +161,18 @@ class PatientDashboardPage extends StatelessWidget {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AiAssistantPage()),
+          );
+        },
+        icon: const Icon(Icons.chat_bubble_outline),
+        label: const Text('Ask LeanBot'),
+        backgroundColor: const Color(0xFF2b6cb0),
+        foregroundColor: Colors.white,
       ),
     );
   }

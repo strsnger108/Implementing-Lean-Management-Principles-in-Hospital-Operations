@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/admission_bloc.dart';
+import 'package:synergy_lean_hospital/presentation/pages/common/ai_assistant_page.dart';
 
 class StaffAdmissionBoardPage extends StatelessWidget {
   const StaffAdmissionBoardPage({super.key});
@@ -111,6 +112,18 @@ class StaffAdmissionBoardPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AiAssistantPage()),
+          );
+        },
+        icon: const Icon(Icons.chat_bubble_outline),
+        label: const Text('Ask LeanBot'),
+        backgroundColor: const Color(0xFF2b6cb0),
+        foregroundColor: Colors.white,
       ),
     );
   }
