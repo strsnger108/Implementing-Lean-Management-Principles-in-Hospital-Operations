@@ -1,0 +1,7 @@
+{
+  "name": "Lean Hospital",
+  "description": "Hospital Operations & Lean Management platform for Synergy Global Hospital featuring LOS analytics, consultant workload, VSM waste tracker, and 5S operational audits.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
