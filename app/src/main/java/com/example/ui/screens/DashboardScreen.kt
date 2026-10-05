@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,17 +19,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Card
@@ -56,10 +61,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.components.ConsultantParetoChart
+import com.example.ui.components.DepartmentLosBenchmarkCard
 import com.example.ui.components.KpiCard
 import com.example.ui.components.LeanInsightCard
 import com.example.ui.components.LosDistributionBarChart
 import com.example.ui.components.LosDoughnutChart
+import com.example.ui.components.LosThroughputAnalytics
 import com.example.ui.components.MonthlyTrendChart
 import com.example.ui.viewmodel.HospitalViewModel
 
@@ -70,6 +77,8 @@ fun DashboardScreen(
     onNavigateToVsm: () -> Unit,
     onNavigateToKaizen: () -> Unit,
     onNavigateToSimulator: () -> Unit,
+    onNavigateToFiveS: () -> Unit = {},
+    onNavigateToRca: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val selectedMonthId by viewModel.selectedMonthId.collectAsState()
@@ -218,7 +227,7 @@ fun DashboardScreen(
                 ) {
                     val views = listOf(
                         "overview" to "Overview",
-                        "los" to "LOS Focus",
+                        "los" to "LOS & Throughput",
                         "consultant" to "Consultant Workload"
                     )
                     views.forEach { (id, label) ->
@@ -306,6 +315,71 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth(),
                 testTag = "kpi_incomplete_records"
             )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Quick 5S Audit Action Banner
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onNavigateToFiveS() }
+                    .testTag("banner_quick_5s_audit"),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FactCheck,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "5S Operational Quality Audits",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "Perform ward inspections, log Red Tags & track CAPAs",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    ) {
+                        Text(
+                            text = "Audit Now",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
         }
 
         // Charts Section based on selected view mode
@@ -348,6 +422,21 @@ fun DashboardScreen(
                     )
                     MonthlyTrendChart(modifier = Modifier.fillMaxWidth())
                 }
+            }
+
+            // Chart: Department LOS Benchmark Analytics & Alerts
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                DepartmentLosBenchmarkCard(
+                    benchmarks = viewModel.departmentBenchmarks,
+                    hospitalAvgLos = metrics.avgLOS,
+                    hospitalNationalBenchmark = 4.20,
+                    hospitalLeanTarget = 2.80,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             // Chart 2: LOS Distribution
@@ -414,6 +503,19 @@ fun DashboardScreen(
                         shortStay = metrics.shortStay,
                         mediumStay = metrics.mediumStay,
                         longStay = metrics.longStay,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            if (viewMode == "los") {
+                val throughputMetrics by viewModel.currentThroughputMetrics.collectAsState()
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                    LosThroughputAnalytics(
+                        metrics = throughputMetrics,
+                        dischargeHourDistributions = viewModel.dischargeHourDistributions,
+                        departmentBenchmarks = viewModel.departmentBenchmarks,
+                        throughputTrends = viewModel.monthlyThroughputTrends,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -486,6 +588,48 @@ fun DashboardScreen(
             viewModel.insights.forEach { insight ->
                 LeanInsightCard(insight = insight)
                 Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            // 5 Whys Root Cause Investigation Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToRca() }
+                    .testTag("card_launch_5_whys"),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Psychology,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Investigate Bottlenecks: 5 Whys Root Cause Analysis",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Document and track root cause investigations for discharge delays, 5S defects, and consultant queues.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
 

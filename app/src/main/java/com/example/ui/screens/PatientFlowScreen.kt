@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,11 +21,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Hotel
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ViewKanban
 import androidx.compose.material.icons.filled.Warning
+import com.example.ui.components.PatientKanbanBoard
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -75,6 +79,7 @@ fun PatientFlowScreen(
 
     var showAddDialog by remember { mutableStateOf(false) }
     var patientToDischarge by remember { mutableStateOf<PatientRecord?>(null) }
+    var viewMode by remember { mutableStateOf("Kanban") } // "Kanban" or "List"
 
     Scaffold(
         modifier = modifier.testTag("patient_flow_screen"),
@@ -102,85 +107,165 @@ fun PatientFlowScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Patient Flow & Inpatient Registry",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Track LOS, discharge bottlenecks, and clinical pathway compliance",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.setPatientSearchQuery(it) },
-                        placeholder = { Text("Search by name, IPD #, doctor, ward...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("patient_search_input"),
-                        singleLine = true,
-                        shape = RoundedCornerShape(10.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    val tabs = listOf("All", "Inpatient", "Discharged")
-                    val selectedTabIndex = tabs.indexOf(filterStatus).coerceAtLeast(0)
-                    TabRow(
-                        selectedTabIndex = selectedTabIndex,
-                        containerColor = Color.Transparent
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        tabs.forEach { tabName ->
-                            Tab(
-                                selected = filterStatus == tabName,
-                                onClick = { viewModel.setFilterStatus(tabName) },
-                                text = { Text(tabName, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) },
-                                modifier = Modifier.testTag("tab_$tabName")
+                        Column {
+                            Text(
+                                text = "Patient Flow & Inpatient Registry",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
+                            Text(
+                                text = "Track LOS, Kanban transitions & bottleneck WIP queues",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Toggle between Kanban and List
+                        Row(
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .padding(2.dp)
+                        ) {
+                            Surface(
+                                color = if (viewMode == "Kanban") MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier
+                                    .clickable { viewMode = "Kanban" }
+                                    .testTag("btn_view_kanban")
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ViewKanban,
+                                        contentDescription = "Kanban Board",
+                                        tint = if (viewMode == "Kanban") Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Kanban",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (viewMode == "Kanban") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                color = if (viewMode == "List") MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier
+                                    .clickable { viewMode = "List" }
+                                    .testTag("btn_view_list")
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.FormatListBulleted,
+                                        contentDescription = "List View",
+                                        tint = if (viewMode == "List") Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "List",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (viewMode == "List") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (viewMode == "List") {
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.setPatientSearchQuery(it) },
+                            placeholder = { Text("Search by name, IPD #, doctor, ward...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("patient_search_input"),
+                            singleLine = true,
+                            shape = RoundedCornerShape(10.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        val tabs = listOf("All", "Inpatient", "Discharged")
+                        val selectedTabIndex = tabs.indexOf(filterStatus).coerceAtLeast(0)
+                        TabRow(
+                            selectedTabIndex = selectedTabIndex,
+                            containerColor = Color.Transparent
+                        ) {
+                            tabs.forEach { tabName ->
+                                Tab(
+                                    selected = filterStatus == tabName,
+                                    onClick = { viewModel.setFilterStatus(tabName) },
+                                    text = { Text(tabName, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) },
+                                    modifier = Modifier.testTag("tab_$tabName")
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Patient List
-            if (patients.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Hotel,
-                            contentDescription = null,
-                            tint = Color.LightGray,
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "No patient records found",
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+            if (viewMode == "Kanban") {
+                // Kanban Board Component
+                PatientKanbanBoard(
+                    viewModel = viewModel,
+                    onDischargeClick = { patientToDischarge = it },
+                    modifier = Modifier.fillMaxSize()
+                )
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(patients, key = { it.id }) { patient ->
-                        PatientCard(
-                            patient = patient,
-                            onDischargeClick = { patientToDischarge = patient }
-                        )
+                // Patient List
+                if (patients.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Hotel,
+                                contentDescription = null,
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "No patient records found",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(patients, key = { it.id }) { patient ->
+                            PatientCard(
+                                patient = patient,
+                                onDischargeClick = { patientToDischarge = patient }
+                            )
+                        }
                     }
                 }
             }
@@ -190,8 +275,8 @@ fun PatientFlowScreen(
         if (showAddDialog) {
             AddPatientDialog(
                 onDismiss = { showAddDialog = false },
-                onConfirm = { name, ipd, age, gender, consultant, dept, admDate, notes ->
-                    viewModel.addPatient(name, ipd, age, gender, consultant, dept, admDate, notes)
+                onConfirm = { name, ipd, age, gender, consultant, dept, admDate, notes, acuity ->
+                    viewModel.addPatient(name, ipd, age, gender, consultant, dept, admDate, notes, acuity)
                     showAddDialog = false
                 }
             )
@@ -264,17 +349,41 @@ fun PatientCard(
                     }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (patient.isDischarged) Color(0xFFF1F5F9) else Color(0xFFFEF3C7)
-                ) {
-                    Text(
-                        text = if (patient.isDischarged) "${patient.losDays} Days LOS" else "Active (Day ${patient.losDays + 1})",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (patient.isDischarged) Color(0xFF334155) else Color(0xFFB45309),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                Column(horizontalAlignment = Alignment.End) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (patient.isDischarged) Color(0xFFF1F5F9) else Color(0xFFFEF3C7)
+                    ) {
+                        Text(
+                            text = if (patient.isDischarged) "${patient.losDays} Days LOS" else "Active (Day ${patient.losDays + 1})",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (patient.isDischarged) Color(0xFF334155) else Color(0xFFB45309),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val acuityColor = when (patient.acuityLevel) {
+                        1 -> Color(0xFF16A34A)
+                        2 -> Color(0xFF2563EB)
+                        3 -> Color(0xFFD97706)
+                        4 -> Color(0xFFDC2626)
+                        else -> Color.Gray
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = acuityColor.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = patient.acuityLabel,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = acuityColor,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
                 }
             }
 
@@ -384,7 +493,7 @@ fun PatientCard(
 @Composable
 fun AddPatientDialog(
     onDismiss: () -> Unit,
-    onConfirm: (name: String, ipd: String, age: Int, gender: String, consultant: String, dept: String, admDate: String, notes: String) -> Unit
+    onConfirm: (name: String, ipd: String, age: Int, gender: String, consultant: String, dept: String, admDate: String, notes: String, acuityLevel: Int) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var ipd by remember { mutableStateOf("SGH-2026-${(100..999).random()}") }
@@ -392,6 +501,7 @@ fun AddPatientDialog(
     var gender by remember { mutableStateOf("Male") }
     var consultant by remember { mutableStateOf("Dr. Rahul Sinha") }
     var department by remember { mutableStateOf("General Medicine") }
+    var acuityLevel by remember { mutableIntStateOf(1) }
     var notes by remember { mutableStateOf("") }
 
     val doctors = listOf(
@@ -508,6 +618,42 @@ fun AddPatientDialog(
                     }
                 }
 
+                // Acuity Level Selector
+                var acuityExpanded by remember { mutableStateOf(false) }
+                val acuityOptions = listOf(
+                    1 to "Level 1: Low Acuity / Stable (1.0x)",
+                    2 to "Level 2: Moderate Acuity (1.5x)",
+                    3 to "Level 3: High Acuity / HDU (2.5x)",
+                    4 to "Level 4: Critical Acuity / ICU (4.0x)"
+                )
+                ExposedDropdownMenuBox(
+                    expanded = acuityExpanded,
+                    onExpandedChange = { acuityExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = acuityOptions.firstOrNull { it.first == acuityLevel }?.second ?: "Level 1",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Clinical Acuity Level") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = acuityExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = acuityExpanded,
+                        onDismissRequest = { acuityExpanded = false }
+                    ) {
+                        acuityOptions.forEach { (lvl, title) ->
+                            DropdownMenuItem(
+                                text = { Text(title) },
+                                onClick = {
+                                    acuityLevel = lvl
+                                    acuityExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
@@ -521,7 +667,7 @@ fun AddPatientDialog(
                 onClick = {
                     val age = ageStr.toIntOrNull() ?: 35
                     val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                    onConfirm(name.ifBlank { "Patient" }, ipd, age, gender, consultant, department, today, notes)
+                    onConfirm(name.ifBlank { "Patient" }, ipd, age, gender, consultant, department, today, notes, acuityLevel)
                 },
                 modifier = Modifier.testTag("dialog_confirm_add_patient")
             ) {

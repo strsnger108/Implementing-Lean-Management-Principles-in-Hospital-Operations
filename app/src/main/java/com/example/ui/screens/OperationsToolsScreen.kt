@@ -43,6 +43,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -132,21 +133,52 @@ fun OperationsToolsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    TabRow(selectedTabIndex = selectedToolTab) {
+                    ScrollableTabRow(
+                        selectedTabIndex = selectedToolTab,
+                        edgePadding = 0.dp,
+                        containerColor = Color.Transparent
+                    ) {
                         Tab(
                             selected = selectedToolTab == 0,
                             onClick = { selectedToolTab = 0 },
-                            text = { Text("5S Audits", fontWeight = FontWeight.SemiBold) }
+                            text = { Text("5 Whys RCA", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tab_5_whys_rca")
                         )
                         Tab(
                             selected = selectedToolTab == 1,
                             onClick = { selectedToolTab = 1 },
-                            text = { Text("Kaizen Tracker", fontWeight = FontWeight.SemiBold) }
+                            text = { Text("Staff Workload", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tab_staff_workload")
                         )
                         Tab(
                             selected = selectedToolTab == 2,
                             onClick = { selectedToolTab = 2 },
-                            text = { Text("Lean Simulator", fontWeight = FontWeight.SemiBold) }
+                            text = { Text("Kaizen Tracker", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tab_kaizen_tracker")
+                        )
+                        Tab(
+                            selected = selectedToolTab == 3,
+                            onClick = { selectedToolTab = 3 },
+                            text = { Text("Lean Simulator", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tab_lean_simulator")
+                        )
+                        Tab(
+                            selected = selectedToolTab == 4,
+                            onClick = { selectedToolTab = 4 },
+                            text = { Text("Study Report", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tab_study_report")
+                        )
+                        Tab(
+                            selected = selectedToolTab == 5,
+                            onClick = { selectedToolTab = 5 },
+                            text = { Text("OPD Queues", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tab_opd_queues")
+                        )
+                        Tab(
+                            selected = selectedToolTab == 6,
+                            onClick = { selectedToolTab = 6 },
+                            text = { Text("HMS / EHR Sync", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tab_hms_sync")
                         )
                     }
                 }
@@ -154,42 +186,20 @@ fun OperationsToolsScreen(
 
             when (selectedToolTab) {
                 0 -> {
-                    // 5S Audit List
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        item {
-                            Surface(
-                                color = Color(0xFFE0F2FE),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = "5S Methodology in Healthcare",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF0369A1)
-                                    )
-                                    Text(
-                                        text = "1. Sort (Seiri) • 2. Set in Order (Seiton) • 3. Shine (Seiso) • 4. Standardize (Seiketsu) • 5. Sustain (Shitsuke)",
-                                        fontSize = 11.sp,
-                                        color = Color(0xFF0284C7),
-                                        modifier = Modifier.padding(top = 2.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        items(fiveSAudits, key = { it.id }) { audit ->
-                            FiveSAuditCard(audit = audit)
-                        }
-                    }
+                    // Root Cause Analysis (5 Whys Technique)
+                    RootCauseAnalysisScreen(
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
                 1 -> {
+                    // Consultant Workload & Patient Acuity Management
+                    ConsultantWorkloadScreen(
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                2 -> {
                     // Kaizen Action Tracker
                     LazyColumn(
                         modifier = Modifier
@@ -205,9 +215,27 @@ fun OperationsToolsScreen(
                         }
                     }
                 }
-                2 -> {
+                3 -> {
                     // Lean Simulator
                     LeanCapacitySimulator(viewModel = viewModel)
+                }
+                4 -> {
+                    // Study Report
+                    StudyReportScreen(modifier = Modifier.fillMaxSize())
+                }
+                5 -> {
+                    // Live OPD Queues & Waiting Times
+                    OpdWaitingTimeScreen(
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                6 -> {
+                    // Hospital HMS & EHR Auto-Sync Integration Hub
+                    HmsEhrSyncScreen(
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
         }

@@ -10,6 +10,7 @@ import com.example.data.model.FiveSAudit
 import com.example.data.model.KaizenProject
 import com.example.data.model.LeanWasteLog
 import com.example.data.model.PatientRecord
+import com.example.data.model.RootCauseAnalysis
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -31,6 +32,15 @@ interface PatientDao {
 
     @Update
     suspend fun updatePatient(patient: PatientRecord)
+
+    @Query("UPDATE patient_records SET consultantName = :newConsultant WHERE id = :patientId")
+    suspend fun reassignPatient(patientId: Long, newConsultant: String)
+
+    @Query("UPDATE patient_records SET acuityLevel = :newAcuity WHERE id = :patientId")
+    suspend fun updatePatientAcuity(patientId: Long, newAcuity: Int)
+
+    @Query("UPDATE patient_records SET flowStage = :newStage WHERE id = :patientId")
+    suspend fun updateFlowStage(patientId: Long, newStage: String)
 
     @Delete
     suspend fun deletePatient(patient: PatientRecord)
@@ -62,11 +72,17 @@ interface FiveSAuditDao {
     @Query("SELECT * FROM five_s_audits ORDER BY id DESC")
     fun getAllAudits(): Flow<List<FiveSAudit>>
 
+    @Query("SELECT * FROM five_s_audits WHERE department = :dept ORDER BY id DESC")
+    fun getAuditsByDepartment(dept: String): Flow<List<FiveSAudit>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAudit(audit: FiveSAudit): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAudits(audits: List<FiveSAudit>)
+
+    @Delete
+    suspend fun deleteAudit(audit: FiveSAudit)
 
     @Query("SELECT COUNT(*) FROM five_s_audits")
     suspend fun getCount(): Int
@@ -90,5 +106,26 @@ interface KaizenDao {
     suspend fun deleteKaizen(project: KaizenProject)
 
     @Query("SELECT COUNT(*) FROM kaizen_projects")
+    suspend fun getCount(): Int
+}
+
+@Dao
+interface RootCauseDao {
+    @Query("SELECT * FROM root_cause_analyses ORDER BY id DESC")
+    fun getAllAnalyses(): Flow<List<RootCauseAnalysis>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAnalysis(analysis: RootCauseAnalysis): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAnalyses(analyses: List<RootCauseAnalysis>)
+
+    @Update
+    suspend fun updateAnalysis(analysis: RootCauseAnalysis)
+
+    @Delete
+    suspend fun deleteAnalysis(analysis: RootCauseAnalysis)
+
+    @Query("SELECT COUNT(*) FROM root_cause_analyses")
     suspend fun getCount(): Int
 }
